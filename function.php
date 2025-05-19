@@ -1,131 +1,168 @@
-<?php 
+<?php
+include '../connection.php';
 
-  include '../connection.php';
 
-  if(isset($_POST['update_bio']))
-  {
-      $id = mysqli_real_escape_string($con, $_POST['id']);
-      $about = mysqli_real_escape_string($con, $_POST['about']);
 
-      $query_run = mysqli_query($con, "UPDATE `dashboard` SET `about` = '$about'");
+ /* Address Combo Box function */
+ $str = "";
+ if(isset($_POST['type']) && $_POST["type"] == "City"){
 
-      if($query_run)
-      {
-          //$_SESSION['messageCreate'] = " Created Successfully";
-          header("Location: maintenance.php");
-          exit(0);
-      
-      }
+   $sql = "SELECT DISTINCT citytown FROM tbl_barangays WHERE province = '{$_POST['province']}'";
 
-  }
+   $query = mysqli_query($con,$sql) or die("Query Unsuccessful.");
 
-  if(isset($_POST['update_User']))
-  {
-    $user_id = mysqli_real_escape_string($con, $_POST['id']);
-    $username = mysqli_real_escape_string($con, $_POST['username']);
-    $password = mysqli_real_escape_string($con, $_POST['password']);
+   $str = "";
+   while($row = mysqli_fetch_assoc($query)){
+     $str .= "<option value='{$row['citytown']}'>{$row['citytown']}</option>";
+   }
+   echo $str;
 
-    $query_run = mysqli_query($con, "UPDATE `tblstaff` SET `username` = '$username', `password` = '$password' WHERE `id` = '$user_id' ");
+   
+ }else if(isset($_POST['type']) && $_POST["type"] == "Barangay"){
 
-    if($query_run)
-    {
-        header("Location: userAccount.php");
-        exit(0);
-    }
-  }
+   $sql = "SELECT DISTINCT barangay FROM tbl_barangays WHERE CityTown = '{$_POST['CityTown']}'";
 
-if(isset($_POST['update_admin']))
+   $query = mysqli_query($con,$sql) or die("Query Unsuccessful.");
+
+   $str = "";
+   while($row = mysqli_fetch_assoc($query)){
+     $str .= "<option value='{$row['barangay']}'>{$row['barangay']}</option>";
+   }
+   echo $str;
+
+   
+ }else if(isset($_POST['type'])){
+
+   $sql = "SELECT distinct province from tbl_barangays order by province";
+
+   $query = mysqli_query($con,$sql) or die("Query Unsuccessful.");
+
+   
+   while($row = mysqli_fetch_assoc($query)){
+     $str .= "<option value='{$row['province']}'>{$row['province']}</option>";
+   }
+   echo $str;
+ }
+
+//Add function
+if(isset($_POST['save_staff']))
 {
-  $user_id = mysqli_real_escape_string($con, $_POST['id']);
+  $firstname = mysqli_real_escape_string($con, $_POST['firstname']);
+  $lastname = mysqli_real_escape_string($con, $_POST['lastname']);
+  $address = mysqli_real_escape_string($con, $_POST['address']);
+  $contactNo = mysqli_real_escape_string($con, $_POST['contactNo']);
+  $gender = mysqli_real_escape_string($con, $_POST['gender']);
   $username = mysqli_real_escape_string($con, $_POST['username']);
   $password = mysqli_real_escape_string($con, $_POST['password']);
-  $confirm_password = mysqli_real_escape_string($con, $_POST['confirm_password']);
+  $middlename = mysqli_real_escape_string($con, $_POST['middlename']);
+  $province = mysqli_real_escape_string($con, $_POST['province']);
+  $City = mysqli_real_escape_string($con, $_POST['City']);
+  $barangay = mysqli_real_escape_string($con, $_POST['barangay']);
+  $houseNo = mysqli_real_escape_string($con, $_POST['houseNo']);
+  $purokNo = mysqli_real_escape_string($con, $_POST['purokNo']);
+  $hashedpassword = password_hash($password, PASSWORD_DEFAULT);
+  //quert to add the new data
+  $query = "INSERT
+   INTO `tblstaff`(`firstname`, `lastname`, `province`, `City`, `barangay`, `houseNo`, `purokNo`, `contactNo`, `gender`, `username`, `password`, `middlename`) VALUES 
+  (
+  '$firstname',
+  '$lastname',
+  '$province',
+  '$City',
+  '$barangay',
+  '$houseNo',
+  '$purokNo',
+  '$contactNo',
+  '$gender',
+  '$username',
+  '$hashedpassword',
+  '$middlename')";
 
-  if($password !== $confirm_password)
-  {
-    $_SESSION['message'] = "Passwords do not match";
-    header("Location: changepassword.php");
-    exit(0);
-  }
+  $date = date_default_timezone_set('Asia/Tokyo'); 
+  $currentDateTime = date('F j, Y - g:i:A');
 
-  $query_run = mysqli_query($con, "UPDATE `tbluser` SET `username` = '$username', `password` = '$hashed_password' WHERE `id` = '$user_id' ");
+  $insert = 'Added Staff with name of '.$firstname ." " .$lastname;
+  $session_role = mysqli_real_escape_string($con, $_POST['session_role']);
+  
+  $query1 = "INSERT INTO `tbl_logs` (`usertype`, `remarks`, `created_at`) VALUES ('$session_role', '$insert', '$currentDateTime')";
+  mysqli_query($con, $query1);
+  
+
+  $query_run = mysqli_query($con, $query);
 
   if($query_run)
   {
-    header("Location: ../../index.php");
-    exit(0);
+      //$_SESSION['messageCreate'] = " Created Successfully";
+      header("Location: staff.php?status=success");
+      exit(0);
+  }
+  else
+  {
+      //$_SESSION['messageCreate'] = " Not Created";
+      header("Location: staff.php");
+      exit(0);
   }
 }
-?>
 
-<!-- Logo -->
-<?php
-  if(isset($_FILES["fileImg"]["name"]))
-  {
-    $id = $_POST["id"];
 
-    $src = $_FILES["fileImg"]["tmp_name"];
-    $imageName = $_FILES["fileImg"]["name"];
+  //Edit function
+  if(isset($_POST['update_staff'])){
+    $user_id = mysqli_real_escape_string($con, $_POST['id']);
+    $firstname = mysqli_real_escape_string($con, $_POST['firstname']);
+    $lastname = mysqli_real_escape_string($con, $_POST['lastname']);
+    $address = mysqli_real_escape_string($con, $_POST['address']);
+    $contactNo = mysqli_real_escape_string($con, $_POST['contactNo']);
+    $gender = mysqli_real_escape_string($con, $_POST['gender']);
+    /* $username = mysqli_real_escape_string($con, $_POST['username']);
+    $password = mysqli_real_escape_string($con, $_POST['password']); */
+    $middlename = mysqli_real_escape_string($con, $_POST['middlename']);
+    $province = mysqli_real_escape_string($con, $_POST['province']);
+    $City = mysqli_real_escape_string($con, $_POST['City']);
+    $barangay = mysqli_real_escape_string($con, $_POST['barangay']);
+    $houseNo = mysqli_real_escape_string($con, $_POST['houseNo']);
+    $purokNo = mysqli_real_escape_string($con, $_POST['purokNo']);
+ 
+    // query to update the data
+    $query_run = mysqli_query($con, "UPDATE `tblstaff` SET `firstname` = '$firstname', `lastname` = '$lastname', `province` = '$province', `City` = '$City', `barangay` = '$barangay', `houseNo` = '$houseNo', `purokNo` = '$purokNo', `contactNo` = '$contactNo', `gender` = '$gender', `middlename` = '$middlename' WHERE `id` = '$user_id'");
 
-    $target = "img/" . $imageName;
 
-    move_uploaded_file($src, $target);
+    $date = date_default_timezone_set('Asia/Tokyo'); 
+    $currentDateTime = date('F j, Y - g:i:A');
 
-    $query = "UPDATE dashboard SET image = '$imageName' WHERE id = $id";
-    mysqli_query($con, $query);
+    $insert = 'Updated Staff with name of '.$firstname ." " .$lastname;
+    $session_role = mysqli_real_escape_string($con, $_POST['session_role']);
+    
+    $query1 = "INSERT INTO `tbl_logs` (`usertype`, `remarks`, `created_at`) VALUES ('$session_role', '$insert', '$currentDateTime')";
+    mysqli_query($con, $query1);
 
-    if($query)
+    if($query_run)
     {
-      header("Location: maintenance.php");
+      header("Location: staff.php?status=success1");
+      exit(0);
     }
-
   }
-?>
-
-<!-- CertL function -->
-<?php
-  if(isset($_FILES["certLogoLeft"]["name"]))
+  //Delete function
+  if(isset($_POST['delete_staff']))
   {
-    $id = $_POST["id"];
+    $id = mysqli_real_escape_string($con, $_POST['id']);
+    $firstname = mysqli_real_escape_string($con, $_POST['firstname']);
+    $lastname = mysqli_real_escape_string($con, $_POST['lastname']);
 
-    $src = $_FILES["certLogoLeft"]["tmp_name"];
-    $imageName = $_FILES["certLogoLeft"]["name"];
+    // query to delete a record
+    $query = "DELETE FROM tblstaff WHERE id=$id";
 
-    $target = "img/" . $imageName;
+    $date = date_default_timezone_set('Asia/Tokyo'); 
+    $currentDateTime = date('F j, Y - g:i:A');
 
-    move_uploaded_file($src, $target);
+    $insert = 'Deleted Staff with name of '.$firstname ." " .$lastname;
+    $session_role = mysqli_real_escape_string($con, $_POST['session_role']);
+    
+    $query1 = "INSERT INTO `tbl_logs` (`usertype`, `remarks`, `created_at`) VALUES ('$session_role', '$insert', '$currentDateTime')";
+    mysqli_query($con, $query1);
 
-    $query = "UPDATE dashboard SET `certL` = '$imageName' WHERE id = $id";
-    mysqli_query($con, $query);
-
-    if($query)
-    {
-      header("Location: maintenance.php");
+    if (mysqli_query($con, $query)) {
+      header("Location: staff.php?status=success2");
+        exit(0);
     }
-
-  }
-?>
-
-<!-- CertR function -->
-<?php
-  if(isset($_FILES["certLogoRight"]["name"]))
-  {
-    $id = $_POST["id"];
-
-    $src = $_FILES["certLogoRight"]["tmp_name"];
-    $imageName = $_FILES["certLogoRight"]["name"];
-
-    $target = "img/" . $imageName;
-
-    move_uploaded_file($src, $target);
-
-    $query = "UPDATE dashboard SET `certR` = '$imageName' WHERE id = $id";
-    mysqli_query($con, $query);
-
-    if($query)
-    {
-      header("Location: maintenance.php");
-    }
-
   }
 ?>
